@@ -1,0 +1,13 @@
+{
+  "name": "short-drama-android",
+  "version": "1.0.0",
+  "description": "短剧聚合播放中心 - Android App（Cordova + nodejs-mobile 内嵌 Node 服务）",
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "cordova build android",
+    "run": "cordova run android"
+  },
+  "devDependencies": {}
+}

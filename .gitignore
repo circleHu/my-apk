@@ -1,0 +1,7 @@
+# 本地生成的 Node / Cordova 工程产物
+node_modules/
+platforms/
+plugins/
+www/nodejs-project/server.js
+*.log
+.DS_Store

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>短剧中心 - 正在启动</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+            background: #0b0d13; color: #e5e9f0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 18px; overflow: hidden; text-align: center; padding: 20px;
+        }
+        .logo { font-size: 46px; }
+        .title { font-size: 16px; font-weight: 600; color: #fff; letter-spacing: 1px; }
+        .status { font-size: 12px; color: #64748b; min-height: 18px; }
+        .spinner {
+            width: 28px; height: 28px; border: 3px solid #1f2536; border-top-color: #2563eb;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error { color: #ef4444; font-size: 13px; line-height: 1.6; max-width: 280px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="logo">🎬</div>
+    <div class="title">短剧中心</div>
+    <div class="spinner" id="spinner"></div>
+    <div class="status" id="status">正在启动本地服务...</div>
+
+    <script>
+        // 引导页：等待 nodejs-mobile 在手机本地拉起 8999 端口后，跳转到完整界面（?app=1 隐藏桌面下载）
+        var APP_URL = 'http://127.0.0.1:8999/?app=1';
+        var MAX_WAIT = 30000;   // 最多等待 30 秒
+        var POLL_MS = 400;      // 每 400ms 探测一次
+
+        var statusEl = document.getElementById('status');
+        var startedAt = Date.now();
+
+        function onReady() {
+            statusEl.textContent = '服务已就绪，正在进入...';
+            location.replace(APP_URL);
+        }
+
+        function check() {
+            // fetch 探测 /api/ping，一旦返回即认为本地服务已可用
+            fetch('http://127.0.0.1:8999/api/ping')
+                .then(function (r) {
+                    if (r.ok) onReady();
+                    else scheduleRetry();
+                })
+                .catch(scheduleRetry);
+        }
+
+        function scheduleRetry() {
+            if (Date.now() - startedAt > MAX_WAIT) {
+                document.getElementById('spinner').style.display = 'none';
+                statusEl.className = 'error';
+                statusEl.innerHTML = '本地服务启动超时。<br>请确认当前为安装的 App 且网络正常后，点右上角刷新重试。';
+                return;
+            }
+            setTimeout(check, POLL_MS);
+        }
+
+        check();
+    </script>
+</body>
+</html>

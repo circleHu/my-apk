@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.example.shortdrama" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+
+  <name>短剧中心</name>
+  <description>短剧聚合播放中心（App 内置 Node.js 本地服务）</description>
+
+  <!-- 首屏引导页（负责轮询检测本地服务就绪后跳转到 http://127.0.0.1:8999） -->
+  <content src="index.html" />
+
+  <!-- 允许所有外网资源（封面 / 播放源 / hls.js CDN 等） -->
+  <access origin="*" />
+  <allow-navigation href="*" />
+
+  <preference name="BackgroundColor" value="#0b0d13" />
+  <preference name="Orientation" value="default" />
+  <preference name="android-minSdkVersion" value="24" />
+  <preference name="android-targetSdkVersion" value="33" />
+  <!-- 页面使用深色，避免状态栏白闪 -->
+  <preference name="StatusBarBackgroundColor" value="#0b0d13" />
+
+  <platform name="android">
+    <!-- 允许 WebView 访问明文 http://127.0.0.1:8999（Android 9+ 默认禁止明文流量） -->
+    <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+      <application android:usesCleartextTraffic="true" />
+    </edit-config>
+  </platform>
+
+  <!-- 构建前自动把仓库根目录的 短剧播放中心.js 同步为 www/nodejs-project/server.js，
+       保证 App 内运行的始终是你在根目录维护的最新服务代码 -->
+  <hook type="before_prepare" src="hooks/copy-server.js" />
+</widget>
