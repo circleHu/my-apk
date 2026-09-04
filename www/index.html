@@ -66,37 +66,25 @@
             setTimeout(check, POLL_MS);
         }
 
-        // 启动内置 Node 服务。兼容 nodejs-mobile-cordova 常见暴露方式：
-        // 1) cordova.require('nodejs-mobile')  2) 全局 window.nodejs
-        // 0.5.x 官方 API 为 startProject()，个别老版本为 start('nodejs-project')，均兜底尝试。
+        // 启动内置 Node 服务：nodejs-mobile-cordova@0.4.x 在全局暴露 nodejs 对象，
+        // 其 API 为 node.start('main.js')。原生层会把 APK 内 assets 的
+        // www/nodejs-project 拷到应用目录后，执行 node <项目根>/main.js。
         function startNodeService() {
-            var node = null;
-            try {
-                if (window.cordova && typeof cordova.require === 'function') {
-                    node = cordova.require('nodejs-mobile');
-                }
-            } catch (e) { /* 继续走全局变量 */ }
-            if (!node && window.nodejs) node = window.nodejs;
-            if (!node) {
+            var node = window.nodejs || null;
+            if (!node || typeof node.start !== 'function') {
                 statusEl.textContent = '未检测到内置 Node 插件（可能不是通过安装包运行）。';
                 return;
             }
-
-            var errMsg = null;
             try {
-                if (typeof node.startProject === 'function') {
-                    node.startProject('nodejs-project');
-                } else if (typeof node.start === 'function') {
-                    node.start('nodejs-project/main.js');
-                } else {
-                    errMsg = '未知的 nodejs-mobile 启动 API。';
-                }
+                node.start('main.js', function (err) {
+                    if (err) {
+                        statusEl.className = 'error';
+                        statusEl.textContent = 'Node 服务启动失败：' + String(err);
+                    }
+                });
             } catch (e) {
-                errMsg = String((e && e.message) || e);
-            }
-            if (errMsg) {
                 statusEl.className = 'error';
-                statusEl.innerHTML = 'Node 服务启动失败：' + errMsg;
+                statusEl.textContent = 'Node 服务启动失败：' + String((e && e.message) || e);
             }
         }
 
