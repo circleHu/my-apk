@@ -9,5 +9,13 @@
     "build": "cordova build android",
     "run": "cordova run android"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "cordova-android": "^10.1.2",
+    "nodejs-mobile-cordova": "^0.4.3"
+  },
+  "cordova": {
+    "plugins": {
+      "nodejs-mobile-cordova": {}
+    }
+  }
 }

@@ -2,6 +2,11 @@
 node_modules/
 platforms/
 plugins/
-www/nodejs-project/server.js
 *.log
 .DS_Store
+
+# 历史误写入的字面 %TEMP% 目录（若存在则忽略，避免被 git 跟踪）
+%TEMP%/
+
+# 注意：www/nodejs-project/server.js 是由根目录「短剧播放中心.js」同步生成的静态副本，
+# 必须随仓库提交（不要 ignore），否则 APK 内将缺少服务代码。

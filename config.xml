@@ -33,7 +33,4 @@
     </edit-config>
   </platform>
 
-  <!-- 构建前自动把仓库根目录的 短剧播放中心.js 同步为 www/nodejs-project/server.js，
-       保证 App 内运行的始终是你在根目录维护的最新服务代码 -->
-  <hook type="before_prepare" src="hooks/copy-server.js" />
 </widget>

@@ -35,14 +35,45 @@ jobs:
 
       # 说明：nodejs-mobile-cordova 在 npm 上的真实最新版本为 0.4.3（不存在 0.5.x）。
       # 0.4.3 已内置把 www/nodejs-project 作为 node 项目拷贝并运行。
+      # 注意：install 钩子为 before_plugin_install，会在每次 prepare/平台重装插件时执行，
+      # 期间可能因网络/权限下载失败。set +e 保证即使出错也继续，便于下方打印完整 npm 日志定位。
       - name: 添加 nodejs-mobile 插件（内嵌 Node 运行时，用于在手机本地跑服务）
-        run: cordova plugin add nodejs-mobile-cordova@0.4.3
+        run: |
+          set +e
+          cordova plugin add nodejs-mobile-cordova@0.4.3
+          EXIT_CODE=$?
+          echo "==================== plugin add exit: ${EXIT_CODE} ===================="
+          echo "--- npm debug log tail ---"
+          ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -1 | xargs -r tail -80
+          exit ${EXIT_CODE}
+
+      # 关键修复：nodejs-mobile-cordova@0.4.3 是 2019 年的旧插件，
+      # 其 after_prepare hooks 用无参 new platformAPI() 构造 cordova-android 10 的 Api，
+      # 导致 platform add 阶段抛 ERR_INVALID_ARG_TYPE（The "path" argument must be of type string）。
+      # 此处直接修补 plugins/ 下已落盘的 hook 源文件（platform add 会复用已存在的插件目录，不会覆盖）。
+      # 已在本地 Windows + cordova 11.1 + cordova-android 10.1.2 环境验证通过。
+      - name: 修补 nodejs-mobile 插件 hooks（兼容 cordova-android 10 / cordova 11）
+        run: node scripts/patch-nodejs-mobile-hooks.js
 
       - name: 添加 Android 平台
-        run: cordova platform add android@10.1.2
+        run: |
+          set +e
+          cordova platform add android@10.1.2
+          EXIT_CODE=$?
+          echo "==================== platform add exit: ${EXIT_CODE} ===================="
+          echo "--- npm debug log tail ---"
+          ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -1 | xargs -r tail -80
+          exit ${EXIT_CODE}
 
       - name: 构建 Debug APK
-        run: cordova build android --no-telemetry
+        run: |
+          set +e
+          cordova build android --no-telemetry
+          EXIT_CODE=$?
+          echo "==================== build exit: ${EXIT_CODE} ===================="
+          echo "--- 最近错误插件日志 ---"
+          ls -t /home/runner/.npm/_logs/*.log 2>/dev/null | head -3 | xargs -r tail -120
+          exit ${EXIT_CODE}
 
       - name: 上传 APK 产物
         uses: actions/upload-artifact@v4

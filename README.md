@@ -14,19 +14,23 @@
 
 ```
 .
-├── 短剧播放中心.js            # 服务端源码（唯一需要维护的核心文件，构建时自动复制进 www/nodejs-project/）
-├── config.xml                 # Cordova 工程配置（含明文 http 白名单、before_prepare 钩子）
+├── 短剧播放中心.js            # 服务端源码（唯一需要维护的核心文件）
+├── config.xml                 # Cordova 工程配置（含明文 http 白名单）
 ├── package.json
-├── hooks/
-│   └── copy-server.js         # 构建前自动把根目录 短剧播放中心.js -> www/nodejs-project/server.js
+├── scripts/
+│   └── patch-nodejs-mobile-hooks.js   # 修补 nodejs-mobile-cordova 插件 hooks（兼容 cordova-android 10 / cordova 11）
 ├── www/
 │   ├── index.html             # 启动引导页（检测本地服务就绪后跳转）
 │   └── nodejs-project/
 │       ├── main.js            # nodejs-mobile 入口：启动本地 Node 服务
-│       └── server.js          # ← 构建时由 copy-server.js 自动生成（勿手动编辑，已 gitignore）
+│       └── server.js          # ← 根目录「短剧播放中心.js」的静态副本（必须随仓库提交）
 └── .github/workflows/
-    └── build-apk.yml          # 云端构建 APK 的工作流
+    └── build-apk.yml          # 云端构建 APK 的工作流（含插件 hooks 修补步骤）
 ```
+
+> **重要**：`www/nodejs-project/server.js` 是根目录「短剧播放中心.js」的静态副本。修改服务代码后，
+> 请同步更新该副本（例如 `copy 短剧播放中心.js www\nodejs-project\server.js`），再提交推送。
+> 它与工程一起提交（未加入 gitignore），APK 会直接打包它。
 
 ---
 
@@ -62,8 +66,8 @@ git push -u origin main
 
 | 情况 | 做法 |
 |---|---|
-| 修改了服务代码 | 改根目录 `短剧播放中心.js` → `git add . && git commit && git push` → Actions 重新构建下载新 APK |
-| 接口 TOKEN 过期（报 401/解密失败） | 打开 `短剧播放中心.js` 顶部更新 `TOKEN`/密钥 → 重新推送构建 |
+| 修改了服务代码 | 改根目录 `短剧播放中心.js` → **同步** `copy 短剧播放中心.js www\nodejs-project\server.js` → `git add . && git commit && git push` → Actions 重新构建下载新 APK |
+| 接口 TOKEN 过期（报 401/解密失败） | 打开 `短剧播放中心.js` 顶部更新 `TOKEN`/密钥 → 同步副本 → 重新推送构建 |
 | 想要正式安装包 | 后续可在 workflow 中增加 `assembleRelease` + 签名配置 |
 
 ---
