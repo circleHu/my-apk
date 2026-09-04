@@ -21,6 +21,12 @@
   <preference name="StatusBarBackgroundColor" value="#0b0d13" />
 
   <platform name="android">
+    <!-- 联网权限：App 需访问外网接口获取短剧数据/封面/播放源 -->
+    <config-file parent="/*" target="app/src/main/AndroidManifest.xml">
+      <uses-permission android:name="android.permission.INTERNET" />
+      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    </config-file>
+
     <!-- 允许 WebView 访问明文 http://127.0.0.1:8999（Android 9+ 默认禁止明文流量） -->
     <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
       <application android:usesCleartextTraffic="true" />

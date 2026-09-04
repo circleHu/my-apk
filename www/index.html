@@ -31,13 +31,15 @@
     <div class="status" id="status">正在启动本地服务...</div>
 
     <script>
-        // 引导页：等待 nodejs-mobile 在手机本地拉起 8999 端口后，跳转到完整界面（?app=1 隐藏桌面下载）
+        // 引导页：先通过 Cordova 插件把本地 Node 服务（nodejs-project/main.js）拉起来，
+        // 然后轮询探测 127.0.0.1:8999，服务就绪后跳转到完整界面（?app=1 隐藏桌面下载）。
         var APP_URL = 'http://127.0.0.1:8999/?app=1';
         var MAX_WAIT = 30000;   // 最多等待 30 秒
         var POLL_MS = 400;      // 每 400ms 探测一次
 
         var statusEl = document.getElementById('status');
         var startedAt = Date.now();
+        var started = false;
 
         function onReady() {
             statusEl.textContent = '服务已就绪，正在进入...';
@@ -64,7 +66,55 @@
             setTimeout(check, POLL_MS);
         }
 
-        check();
+        // 启动内置 Node 服务。兼容 nodejs-mobile-cordova 常见暴露方式：
+        // 1) cordova.require('nodejs-mobile')  2) 全局 window.nodejs
+        // 0.5.x 官方 API 为 startProject()，个别老版本为 start('nodejs-project')，均兜底尝试。
+        function startNodeService() {
+            var node = null;
+            try {
+                if (window.cordova && typeof cordova.require === 'function') {
+                    node = cordova.require('nodejs-mobile');
+                }
+            } catch (e) { /* 继续走全局变量 */ }
+            if (!node && window.nodejs) node = window.nodejs;
+            if (!node) {
+                statusEl.textContent = '未检测到内置 Node 插件（可能不是通过安装包运行）。';
+                return;
+            }
+
+            var errMsg = null;
+            try {
+                if (typeof node.startProject === 'function') {
+                    node.startProject('nodejs-project');
+                } else if (typeof node.start === 'function') {
+                    node.start('nodejs-project/main.js');
+                } else {
+                    errMsg = '未知的 nodejs-mobile 启动 API。';
+                }
+            } catch (e) {
+                errMsg = String((e && e.message) || e);
+            }
+            if (errMsg) {
+                statusEl.className = 'error';
+                statusEl.innerHTML = 'Node 服务启动失败：' + errMsg;
+            }
+        }
+
+        // Cordova 环境就绪后启动；桌面浏览器预览（无插件）则直接轮询。
+        if (window.cordova) {
+            document.addEventListener('deviceready', function () {
+                started = true;
+                startNodeService();
+                check();
+            }, false);
+            // 部分场景 deviceready 可能早于本脚本，兜底再触发一次
+            setTimeout(function () {
+                if (!started) startNodeService();
+                check();
+            }, 600);
+        } else {
+            check();
+        }
     </script>
 </body>
 </html>
